@@ -28,7 +28,7 @@ export FF_ALL_ARCHS_IOS="arm64 x86_64"
 target_ios=10.0
 
 # libass使用Coretext还是fontconfig;TRUE代表使用CORETEXT,FALSE代表使用fontconfig
-export USE_CORETEXT=FALSE
+export USE_CORETEXT=TRUE
 # 是否编译这些库;如果不编译将对应的值改为FALSE即可；如果ffmpeg对应的值为TRUE时，还会将其它库引入ffmpeg中，否则单独编译其它库
 if [ $USE_CORETEXT = "TRUE" ];then
 export LIBFLAGS=(
@@ -117,7 +117,7 @@ set_flags()
     ASM_FLAGS=
     if [ $ARCH = "x86_64" ];then
         PLATFORM="iphonesimulator"
-        CFLAGS="-arch x86_64 -march=x86-64 -msse4.2 -mpopcnt -m64 -mtune=intel"
+        CFLAGS="-arch x86_64"
         CFLAGS="$CFLAGS -mios-simulator-version-min=$target_ios"
         HOST=x86_64-ios-darwin
         ASM_FLAGS="--disable-asm"
@@ -281,19 +281,23 @@ do_compile_mp3lame()
 #编译ass
 do_compile_ass()
 {
-    # ass 依赖于freetype和fribidi，所以需要检查一下
-    local pkgpath=$UNI_BUILD_ROOT/build/ios-$1/pkgconfig
-    if [ ! -f $pkgpath/freetype2.pc ];then
-        echo "libass dependency freetype please set [freetype]=TRUE "
-        exit 1
-    fi
-    if [ ! -f $pkgpath/fribidi.pc ];then
-        echo "libass dependency fribidi please set [fribidi]=TRUE "
-        exit 1
-    fi
-    if [[ ! -f $pkgpath/fontconfig.pc && USE_CORETEXT="FALSE" ]];then
-        echo "libfontconfig dependency fribidi please set [fontconfig]=TRUE "
-        exit 1
+    if [ $USE_CORETEXT = "FALSE" ];then
+        # ass 依赖于freetype和fribidi，所以需要检查一下
+        local pkgpath=$UNI_BUILD_ROOT/build/ios-$1/pkgconfig
+        if [ ! -f $pkgpath/freetype2.pc ];then
+            echo "libass dependency freetype please set [freetype]=TRUE "
+            exit 1
+        fi
+        if [ ! -f $pkgpath/fribidi.pc ];then
+            echo "libass dependency fribidi please set [fribidi]=TRUE "
+            exit 1
+        fi
+        if [[ ! -f $pkgpath/fontconfig.pc && USE_CORETEXT="FALSE" ]];then
+            echo "libfontconfig dependency fribidi please set [fontconfig]=TRUE "
+            exit 1
+        fi
+#    else
+    
     fi
     
     if [ ! -f $UNI_BUILD_ROOT/build/forksource/ass/configure ];then
