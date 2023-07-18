@@ -32,7 +32,9 @@ expat=6
 fontconfig=7
 ass=8
 openssl=9
-
+harfbuzz=10
+dav1d=11
+icu=12
 # 各个源码的名字
 LIBS[ffmpeg]=ffmpeg
 LIBS[x264]=x264
@@ -44,6 +46,9 @@ LIBS[expat]=expat
 LIBS[fontconfig]=fontconfig
 LIBS[ass]=ass
 LIBS[openssl]=ssl
+LIBS[harfbuzz]=harfbuzz
+LIBS[dav1d]=dav1d
+LIBS[icu]=icu
 
 # 各个源码对应的pkg-config中.pc的名字
 LIBS_PKGS[ffmpeg]=ffmpeg
@@ -56,6 +61,9 @@ LIBS_PKGS[expat]=expat
 LIBS_PKGS[fontconfig]=fontconfig
 LIBS_PKGS[ass]=libass
 LIBS_PKGS[openssl]=openssl
+LIBS_PKGS[harfbuzz]=harfbuzz
+LIBS_PKGS[dav1d]=dav1d
+LIBS_PKGS[icu]=icu
 
 # 默认情况下会检测extra目录下是否有对应的源码，如果没有且要编译这些库，那么将到这里对应的地址去下载
 # xrz:todo 源码已经放入脚本中，默认不需要额外下载 2020-08-11
@@ -80,6 +88,10 @@ All_Resources[fontconfig]=https://www.freedesktop.org/software/fontconfig/releas
 All_Resources[ass]=https://github.com/libass/libass/releases/download/0.14.0/libass-0.14.0.tar.gz
 # openssl
 All_Resources[openssl]=https://www.openssl.org/source/openssl-1.1.1d.tar.gz
+All_Resources[harfbuzz]=https://www.openssl.org/source/openssl-1.1.1d.tar.gz
+# dav1d
+All_Resources[dav1d]=https://code.videolan.org/videolan/dav1d.git
+All_Resources[icu]=https://github.com/unicode-org/icu/releases/tag/release-73-2
 
 # 外部库引入ffmpeg时的配置参数
 # 这里必须要--enable-encoder --enable-decoder的方式开启libx264，libfdk_aac，libmp3lame
@@ -95,6 +107,8 @@ LIBS_PARAM[expat]=""
 LIBS_PARAM[fontconfig]="--enable-libfontconfig"
 LIBS_PARAM[ass]="--enable-libass --enable-filter=subtitles"
 LIBS_PARAM[openssl]="--enable-openssl --enable-protocol=http --enable-protocol=https --enable-protocol=hls --enable-nonfree"
+LIBS_PARAM[dav1d]="--enable-libdav1d"
+
 export LIBS_PARAM
 
 # =====自定义字典实现======== #
@@ -291,6 +305,49 @@ function rm_build()
         echo "....rm $1 build $2 $ARCH...."
         rm -rf build/$1/$2-$ARCH
     done
+}
+
+
+create_dav1d_package_config() {
+    local pkg_path="$1"
+    local prefix_path="$2"
+
+    # cat << EOF EOF 创建文件并写入内容
+    cat > "${pkg_path}/harfbuzz.pc" << EOF
+prefix=${prefix_path}
+exec_prefix=\${prefix}
+libdir=\${exec_prefix}/lib
+includedir=\${prefix}/include
+
+Name: dav1d
+Description: dav1d encoder library
+Version: 1.0.1
+
+Requires:
+Libs: -L\${libdir} -ldav1d
+Cflags: -I\${includedir}
+EOF
+}
+
+create_harfbuzz_package_config() {
+    local pkg_path="$1"
+    local prefix_path="$2"
+
+    # cat << EOF EOF 创建文件并写入内容
+    cat > "${pkg_path}/harfbuzz.pc" << EOF
+prefix=${prefix_path}
+exec_prefix=\${prefix}
+libdir=\${exec_prefix}/lib
+includedir=\${prefix}/include
+
+Name: harfbuzz
+Description: harfbuzz encoder library
+Version: 1.83
+
+Requires:
+Libs: -L\${libdir} -harfbuzz
+Cflags: -I\${includedir}
+EOF
 }
 
 # 版本要和实际下载地址对应;cat > .... << EOF 代表将两个EOF之间内容输入到指定文件

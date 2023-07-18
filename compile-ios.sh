@@ -25,7 +25,10 @@ set -e
 # FF_ALL_ARCHS_IOS="armv7 armv7s arm64 i386 x86_64"
 #export FF_ALL_ARCHS_IOS="arm64e arm64 x86_64"
 export FF_ALL_ARCHS_IOS="arm64 x86_64"
-target_ios=10.0
+# export FF_ALL_ARCHS_IOS="x86_64"
+# export FF_ALL_ARCHS_IOS="arm64"
+
+target_ios=13.0
 
 # libass使用Coretext还是fontconfig;TRUE代表使用CORETEXT,FALSE代表使用fontconfig
 export USE_CORETEXT=FALSE
@@ -35,8 +38,10 @@ export LIBFLAGS=(
 [ffmpeg]=TRUE [x264]=TRUE [fdkaac]=FALSE [mp3lame]=TRUE [fribidi]=TRUE [freetype]=TRUE [ass]=TRUE [openssl]=FALSE
 )
 else
+
 export LIBFLAGS=(
-[ffmpeg]=TRUE [x264]=TRUE [fdkaac]=FALSE [mp3lame]=TRUE [fribidi]=TRUE [freetype]=TRUE [expat]=TRUE [fontconfig]=TRUE [ass]=TRUE [openssl]=FALSE
+[ffmpeg]=TRUE [x264]=TRUE [fdkaac]=TRUE [mp3lame]=TRUE [fribidi]=TRUE [freetype]=TRUE [expat]=TRUE [fontconfig]=TRUE [ass]=TRUE [openssl]=TRUE 
+[harfbuzz]=FALSE [dav1d]=FALSE [icu]=TRUE
 )
 fi
 
@@ -117,7 +122,8 @@ set_flags()
     ASM_FLAGS=
     if [ $ARCH = "x86_64" ];then
         PLATFORM="iphonesimulator"
-        CFLAGS="-arch x86_64 -march=x86-64 -msse4.2 -mpopcnt -m64 -mtune=intel"
+        CFLAGS="-arch x86_64"
+        # CFLAGS="-arch x86_64 -march=x86-64 -msse4.2 -mpopcnt -m64 -mtune=intel"
         CFLAGS="$CFLAGS -mios-simulator-version-min=$target_ios"
         HOST=x86_64-ios-darwin
         ASM_FLAGS="--disable-asm"
@@ -126,6 +132,7 @@ set_flags()
         CFLAGS="-arch arm64 -march=armv8-a+crc+crypto -mcpu=generic"
         CFLAGS="$CFLAGS -miphoneos-version-min=$target_ios -fembed-bitcode -D__IPHONE_OS_MIN_REQUIRED -D__IPHONE_VERSION_MIN_REQUIRED=30000"
         HOST=aarch64-ios-darwin
+        # HOST=arm-apple-darwin
         ASM_FLAGS="--enable-asm"
     elif [ $ARCH = "arm64e" ];then
         PLATFORM="iphoneos"
@@ -259,6 +266,13 @@ real_do_compile()
     cd -
 }
 #编译x264
+do_compile_icu()
+{   
+    local hostbuild=$UNI_BUILD_ROOT/build/forksource/$lib/hostbuild
+    local CONFIGURE_FLAGS="--enable-static --disable-shared --with-cross-build=$hostbuild"
+    real_do_compile "$CONFIGURE_FLAGS" "icu" $1
+}
+#编译x264
 do_compile_x264()
 {
     # iOS x264 暂时无法编译动态库；会提示"ld: -read_only_relocs and -bitcode_bundle (Xcode setting ENABLE_BITCODE=YES) cannot be used together"
@@ -269,7 +283,7 @@ do_compile_x264()
 #编译fdk-aac
 do_compile_fdk_aac()
 {
-    local CONFIGURE_FLAGS="--enable-static --enable-shared --with-pic=yes "
+    local CONFIGURE_FLAGS="--enable-static --disable-shared --with-pic=yes "
     real_do_compile "$CONFIGURE_FLAGS" "fdk-aac" $1
 }
 #编译mp3lame
@@ -283,6 +297,12 @@ do_compile_ass()
 {
     # ass 依赖于freetype和fribidi，所以需要检查一下
     local pkgpath=$UNI_BUILD_ROOT/build/ios-$1/pkgconfig
+    
+    # if [ ! -f $pkgpath/harfbuzz.pc ];then
+    #     echo "libass dependency harfbuzz please set [harfbuzz]=TRUE "
+    #     exit 1
+    # fi
+
     if [ ! -f $pkgpath/freetype2.pc ];then
         echo "libass dependency freetype please set [freetype]=TRUE "
         exit 1
@@ -303,15 +323,29 @@ do_compile_ass()
         cd -
     fi
     
-    local CONFIGURE_FLAGS="--with-pic --disable-libtool-lock --enable-static --enable-shared --disable-fontconfig --disable-harfbuzz --disable-fast-install --disable-test --enable-coretext --disable-require-system-font-provider --disable-profile "
+    local CONFIGURE_FLAGS="--with-pic --disable-libtool-lock --enable-static --disable-shared --disable-fontconfig --disable-harfbuzz --disable-fast-install --disable-test --enable-coretext --disable-require-system-font-provider --disable-profile "
     if [ $USE_CORETEXT = "FALSE" ];then
     CONFIGURE_FLAGS="--with-pic --disable-libtool-lock --enable-static --disable-shared --enable-fontconfig --disable-harfbuzz --disable-fast-install --disable-test --disable-profile --disable-coretext "
     fi
     real_do_compile "$CONFIGURE_FLAGS" "ass" $1
 }
+#编译harfbuzz
+do_compile_harfbuzz()
+{
+    # local SOURCE=$UNI_BUILD_ROOT/build/forksource/harfbuzz
+    # cd $SOURCE
+    # ./autogen.sh
+    # cd -
+    local CONFIGURE_FLAGS="--enable-static --disable-shared "
+    real_do_compile "$CONFIGURE_FLAGS" "harfbuzz" $1
+}
 #编译freetype
 do_compile_freetype()
 {
+    # local SOURCE=$UNI_BUILD_ROOT/build/forksource/freetype
+    # cd $SOURCE
+    # ./autogen.sh
+    # cd -
     local CONFIGURE_FLAGS="--with-pic --with-zlib --without-png --without-harfbuzz --without-bzip2 --without-fsref --without-quickdraw-toolbox --without-quickdraw-carbon --without-ats --disable-fast-install --disable-mmap --enable-static --disable-shared "
     real_do_compile "$CONFIGURE_FLAGS" "freetype" $1
 }
@@ -402,9 +436,11 @@ do_compile_ffmpeg()
     local TARGET_ARCH=
     local TARGET_CPU=
     local ARCH_OPTIONS=
+        # if [ $ARCH = "x86_64" ];then
+
     if [ "$FF_ARCH" = "x86_64" ]; then
         NEON_FLAG=" --disable-neon"
-        TARGET_CPU="x86_64"
+        TARGET_ARCH="x86_64"
         TARGET_CPU="armv8"
         ARCH_OPTIONS="--disable-asm"
     elif [ "$FF_ARCH" = "arm64" ]; then
@@ -451,18 +487,23 @@ do_compile_ffmpeg()
     done
     
     echo ""
-    echo "build ffmpeg $FF_ARCH........"
+    echo "build ffmpeg FF_ARCH $FF_ARCH"
+    echo "build ffmpeg TARGET_ARCH $TARGET_ARCH"
+    echo "build ffmpeg TARGET_CPU $TARGET_CPU"
     echo "FF_CFG_FLAGS $COMMON_FF_CFG_FLAGS"
-    
+
     cd $FF_SOURCE
     set +e
     make distclean
     set -e
+        
+    # pwd
+    # make clean
     ./configure $COMMON_FF_CFG_FLAGS \
         --sysroot=${SDKPATH} \
         --prefix=${FF_PREFIX} \
-        --arch="${TARGET_ARCH}" \
-        --cpu="${TARGET_CPU}" \
+        --arch=$TARGET_ARCH \
+        --cpu=$TARGET_CPU \
         --ar="${AR}" \
         --cc="${CC}" \
         --cxx="${CXX}" \
@@ -512,7 +553,7 @@ do_lipo_all () {
     do
         lib=${LIBS[i]};
         uni_lib_dir=$UNI_BUILD_ROOT/build/ios-universal/$lib/lib
-        uni_inc_dir=$UNI_BUILD_ROOT/build/ios-universal/$lib/include
+        uni_inc_dir=$UNI_BUILD_ROOT/build/ios-universal/$lib
         if [[ ${LIBFLAGS[i]} == "TRUE" ]]; then
             mkdir -p $uni_lib_dir
             mkdir -p $uni_inc_dir
@@ -544,7 +585,7 @@ do_lipo_all () {
     done
 
     # for ffmpeg
-    local FF_FFMPEG_LIBS="libavcodec libavfilter libavformat libavutil libswscale libswresample"
+    local FF_FFMPEG_LIBS="libavcodec libavfilter libavformat libavutil libswscale libswresample libavdevice"
     if [[ ${LIBFLAGS[$ffmpeg]} = "FALSE" ]]; then
         echo "set [ffmpeg]=TRUE first"
         exit 1
@@ -571,15 +612,15 @@ do_lipo_all () {
     done
     
     # copy external to ffmpeg universal dir
-    for(( i=$x264;i<${#LIBS[@]};i++))
-    do
-        lib=${LIBS[i]};
+    # for(( i=$x264;i<${#LIBS[@]};i++))
+    # do
+    #     lib=${LIBS[i]};
         
-        if [[ ${LIBFLAGS[i]} == "TRUE" ]]; then
-            uni_lib_dir1=$UNI_BUILD_ROOT/build/ios-universal/$lib/lib/lib*.a
-            cp -r $uni_lib_dir1 $uni_lib_dir
-        fi
-    done
+    #     if [[ ${LIBFLAGS[i]} == "TRUE" ]]; then
+    #         uni_lib_dir1=$UNI_BUILD_ROOT/build/ios-universal/$lib/lib/lib*.a
+    #         cp -r $uni_lib_dir1 $uni_lib_dir
+    #     fi
+    # done
 }
 
 # 命令开始执行处----------
