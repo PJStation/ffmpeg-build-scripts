@@ -22,3 +22,5 @@ mkdir -p $TARGET_VERSION
 tar -xvJf $TARGET_VERSION.tar.xz --strip-components 1 -C $TARGET_VERSION
 cd -
 echo "tar $TARGET_VERSION xz success"
+
+# tar cJfv ffmpeg.tar.xz ffmpeg
