@@ -32,9 +32,9 @@ expat=6
 fontconfig=7
 ass=8
 openssl=9
-harfbuzz=10
-dav1d=11
-icu=12
+# harfbuzz=10
+# dav1d=11
+# icu=12
 # 各个源码的名字
 LIBS[ffmpeg]=ffmpeg
 LIBS[x264]=x264
@@ -46,9 +46,9 @@ LIBS[expat]=expat
 LIBS[fontconfig]=fontconfig
 LIBS[ass]=ass
 LIBS[openssl]=ssl
-LIBS[harfbuzz]=harfbuzz
-LIBS[dav1d]=dav1d
-LIBS[icu]=icu
+# LIBS[harfbuzz]=harfbuzz
+# LIBS[dav1d]=dav1d
+# LIBS[icu]=icu
 
 # 各个源码对应的pkg-config中.pc的名字
 LIBS_PKGS[ffmpeg]=ffmpeg
@@ -61,9 +61,9 @@ LIBS_PKGS[expat]=expat
 LIBS_PKGS[fontconfig]=fontconfig
 LIBS_PKGS[ass]=libass
 LIBS_PKGS[openssl]=openssl
-LIBS_PKGS[harfbuzz]=harfbuzz
-LIBS_PKGS[dav1d]=dav1d
-LIBS_PKGS[icu]=icu
+# LIBS_PKGS[harfbuzz]=harfbuzz
+# LIBS_PKGS[dav1d]=dav1d
+# LIBS_PKGS[icu]=icu
 
 # 默认情况下会检测extra目录下是否有对应的源码，如果没有且要编译这些库，那么将到这里对应的地址去下载
 # xrz:todo 源码已经放入脚本中，默认不需要额外下载 2020-08-11

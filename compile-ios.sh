@@ -41,7 +41,7 @@ else
 
 export LIBFLAGS=(
 [ffmpeg]=TRUE [x264]=TRUE [fdkaac]=TRUE [mp3lame]=TRUE [fribidi]=TRUE [freetype]=TRUE [expat]=TRUE [fontconfig]=TRUE [ass]=TRUE [openssl]=TRUE 
-[harfbuzz]=FALSE [dav1d]=FALSE [icu]=TRUE
+# [harfbuzz]=FALSE [dav1d]=FALSE [icu]=FALSE
 )
 fi
 
@@ -585,7 +585,9 @@ do_lipo_all () {
     done
 
     # for ffmpeg
-    local FF_FFMPEG_LIBS="libavcodec libavfilter libavformat libavutil libswscale libswresample libavdevice"
+    local FF_FFMPEG_LIBS="libavcodec libavfilter libavformat libavutil libswscale libswresample libavdevice libpostproc"
+
+    # local FF_FFMPEG_LIBS="libavcodec libavfilter libavformat libavutil libswscale libswresample libavdevice"
     if [[ ${LIBFLAGS[$ffmpeg]} = "FALSE" ]]; then
         echo "set [ffmpeg]=TRUE first"
         exit 1
