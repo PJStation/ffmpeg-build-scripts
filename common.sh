@@ -53,7 +53,7 @@ LIBS[openssl]=ssl
 # 各个源码对应的pkg-config中.pc的名字
 LIBS_PKGS[ffmpeg]=ffmpeg
 LIBS_PKGS[x264]=x264
-LIBS_PKGS[fdkaac]=fdkaac
+LIBS_PKGS[fdkaac]=fdk-aac
 LIBS_PKGS[mp3lame]=mp3lame
 LIBS_PKGS[fribidi]=fribidi
 LIBS_PKGS[freetype]=freetype2
@@ -73,7 +73,7 @@ All_Resources[ffmpeg]=https://codeload.github.com/FFmpeg/FFmpeg/tar.gz/n4.2
 # x264
 # https://code.videolan.org/videolan/x264.git
 All_Resources[x264]=https://code.videolan.org/videolan/x264/-/archive/stable/x264-stable.tar.gz
-# fdkaac
+# fdk-aac
 All_Resources[fdkaac]=https://jaist.dl.sourceforge.net/project/opencore-amr/fdk-aac/fdk-aac-2.0.0.tar.gz
 #mp3lame
 All_Resources[mp3lame]=https://jaist.dl.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz

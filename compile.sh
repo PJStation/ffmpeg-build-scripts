@@ -362,7 +362,7 @@ usage()
     echo "Usage:"
     echo "  compile.sh"
     echo "  compile.sh ffmpeg"
-    echo "  compile.sh ffmpeg|x264|fdkaac|"
+    echo "  compile.sh ffmpeg|x264|fdk-aac|"
     echo "  compile.sh clean"
     echo "  compile.sh clean-x264"
     echo "  compile.sh clean-all"
@@ -380,6 +380,11 @@ if [ "$FF_PC_TARGET" != "mac" ] && [ ! `which pkg-config` ]; then
     echo "pkg-config not found begin install....."
     apt-cyg install pkg-config || exit 1
     echo -e "check pkg-config ok......"
+fi
+
+if [ $# -eq 2 ]; then
+   usage
+   exit 1
 fi
 
 #=== sh脚本执行开始 ==== #
@@ -437,7 +442,7 @@ case "$FF_PC_ACTION" in
         for lib in ${!All_Resources[*]}; do
             
             name=${LIBS[$lib]}
-            # echo "name: $name"
+            echo "name: $name"
             if [[ $name == $FF_PC_ACTION ]]; then
                 found=1
                 rm_fork_source $FF_PC_TARGET $name $FF_PC_ARCH
