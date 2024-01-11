@@ -38,7 +38,7 @@ openssl=9
 # 各个源码的名字
 LIBS[ffmpeg]=ffmpeg
 LIBS[x264]=x264
-LIBS[fdkaac]=fdk-aac
+LIBS[fdkaac]=fdkaac
 LIBS[mp3lame]=mp3lame
 LIBS[fribidi]=fribidi
 LIBS[freetype]=freetype
@@ -53,7 +53,7 @@ LIBS[openssl]=ssl
 # 各个源码对应的pkg-config中.pc的名字
 LIBS_PKGS[ffmpeg]=ffmpeg
 LIBS_PKGS[x264]=x264
-LIBS_PKGS[fdkaac]=fdk-aac
+LIBS_PKGS[fdkaac]=fdkaac
 LIBS_PKGS[mp3lame]=mp3lame
 LIBS_PKGS[fribidi]=fribidi
 LIBS_PKGS[freetype]=freetype2
@@ -71,6 +71,7 @@ pull_from_remote=FALSE
 # ffmpeg
 All_Resources[ffmpeg]=https://codeload.github.com/FFmpeg/FFmpeg/tar.gz/n4.2
 # x264
+# https://code.videolan.org/videolan/x264.git
 All_Resources[x264]=https://code.videolan.org/videolan/x264/-/archive/stable/x264-stable.tar.gz
 # fdkaac
 All_Resources[fdkaac]=https://jaist.dl.sourceforge.net/project/opencore-amr/fdk-aac/fdk-aac-2.0.0.tar.gz
@@ -232,6 +233,25 @@ function copy_from_local() {
     # -rf 拷贝指定目录及其所有的子目录下文件
     cp -rf extra/$1 build/forksource/$1
 }
+# function do_prepare() {
+#         if [[ -d extra/$1 ]] && [[ ${LIBFLAGS[$lib]} = "TRUE" ]];then
+#             if [ ${LIBS[$lib]} = "ffmpeg" ] && [ $INTERNAL_DEBUG = "TRUE" ];then
+#                 # ffmpeg用内部自己研究的代码
+#                 if [ ! -d build/forksource/ffmpeg ];then
+#                     echo "== copy fork ffmpeg =="
+#                     mkdir -p build/forksource/ffmpeg
+#                     cp -rf /Users/apple/devoloper/mine/ffmpeg/ffmpeg-source/ build/forksource/ffmpeg
+#                 fi
+                
+#                 continue
+#             fi
+            
+#             # 正常拷贝库
+#             copy_from_local ${LIBS[$lib]}
+            
+#         fi
+# }
+
 
 # ---- 供外部调用，检查编译环境和获取所有用于编译的源码 ------
 # 参数为所有需要编译的平台 x86_64 arm64 等等；使用prepare_all ios x86_64 arm64;
@@ -278,35 +298,47 @@ function rm_extra_source()
 
 function rm_all_fork_source()
 {
-    echo "....rm $1 forksource $2...."
+    echo "....remove $1 forksource $2...."
     rm -rf build/forksource
 }
 
 function rm_fork_source()
 {
-    if [ $1 = "all" ];then
-        rm -rf build/forksource
-        return
-    fi
+    # if [ $2 = "all" ];then
+    #     rm -rf build/forksource
+    #     return
+    # fi
     
-    echo "....rm forksource $1...."
-    rm -rf build/forksource/$1
+    echo "....remove forksource $2...."
+    rm -rf build/forksource/$2
 }
 
 function rm_build()
 {
-    if [ $2 = "all" ];then
-        rm -rf build/$1-*
-        return
-    fi
+    # if [ $2 = "all" ];then
+    #     rm -rf build/$1-*
+    #     return
+    # fi
     
-    for ARCH in ${*:3}
-    do
-        echo "....rm $1 build $2 $ARCH...."
-        rm -rf build/$1/$2-$ARCH
-    done
+    # for ARCH in ${*:3}
+    # do
+    #     echo "....rm $1 build $2 $ARCH...."
+    #     rm -rf build/$1-$ARCH
+    # done
+    rm -rf build/$1-$3/$2
+    echo "....rm $1 build $1-$3 $2...."
 }
 
+function clean_local_build_fork_source()
+{
+    local FF_PC_TARGET = $1
+    local FOLDERNAME = $2
+    local ARCH = $3
+    rm -rf build/forksource/$FOLDERNAME
+    echo "....rm forksource $FOLDERNAME...."
+    rm -rf build/$FF_PC_TARGET-$ARCH/$FOLDERNAME
+    echo "....rm build $FF_PC_TARGET-$ARCH $FOLDERNAME...."
+}
 
 create_dav1d_package_config() {
     local pkg_path="$1"
